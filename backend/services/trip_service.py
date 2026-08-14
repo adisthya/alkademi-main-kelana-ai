@@ -1,37 +1,54 @@
-def calculate_daily_budget(budget: float, days: int):
-  return budget/days
-
-def get_trip_category(budget: float):
-  if (budget < 1000):
-    return "Backpacker"
-  elif (budget <= 3000):
-    return "Standard"
-  else:
-    return "Luxury"
-
-def get_recommended_places(destination: str):
-  if (destination.casefold() == "japan"):
-    return [
+trip_categories = ["Backpacker", "Standard", "Luxury"]
+trip_transportations = ["Flight", "Train", "Bus"]
+trip_places = {
+  "japan": [
     "Tokyo Tower",
     "Shibuya",
     "Mt. Fuji"
-  ]
-  elif (destination.casefold() == "korea"):
-    return [
+  ],
+  "korea": [
     "Seoul",
     "Busan",
     "Jeju Island"
   ]
+}
+
+def calculate_daily_budget(budget: float, days: int):
+  return budget/days
+
+def get_trip_categories():
+  return trip_categories;
+
+def get_trip_transportation():
+  return trip_transportations;
+
+def get_trip_places():
+  places: list[str] = []
+
+  for city in trip_places:
+    city_places: list[str] = trip_places.get(city, [])
+    places += city_places
+
+  return places
+
+def get_trip_category(budget: float):
+  if (budget < 1000):
+    return trip_categories[0]
+  elif (budget <= 3000):
+    return trip_categories[1]
   else:
-    return []
+    return trip_categories[2]
+
+def get_recommended_places(destination: str):
+  return trip_places.get(destination.casefold(), [])
 
 def get_transportation(category: str):
   if (category.casefold() == "luxury"):
-    return "Flight"
+    return trip_transportations[0]
   elif (category.casefold() == "standard"):
-    return "Train"
+    return trip_transportations[1]
   else:
-    return "Bus"
+    return trip_transportations[2]
 
 def get_travel_season(travel_month: str):
   if (travel_month.casefold() == "december"):
