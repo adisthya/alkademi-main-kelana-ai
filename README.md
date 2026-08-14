@@ -4,7 +4,8 @@ Proyek kelas [MAIN](https://main.alkademi.foundation) (Mastering AI for Nation B
 
 ## Daftar Isi
 
-| Versi                    | Tugas                                  | Source                                                                             |
-| :----------------------- | :------------------------------------- | :--------------------------------------------------------------------------------- |
-| [v0.1.0](docs/task-1.md) | Building the First Feature of KelanaAI | [Tugas 1](https://github.com/adisthya/alkademi-main-kelana-ai/releases/tag/v0.1.0) |
-| [v0.2.0](docs/task-2.md) | Making KelanaAI Smarter                | [Tugas 2](https://github.com/adisthya/alkademi-main-kelana-ai/releases/tag/v0.2.0) |
+| Versi                    | Tugas                                                      | Commits                                                                                                               |
+| :----------------------- | :--------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| [v0.1.0](docs/task-1.md) | Building the First Feature of KelanaAI                     | [Commit 65181cb](https://github.com/adisthya/alkademi-main-kelana-ai/commit/65181cb049fdd59f4af56ae20cbc40ca1bca5ffc) |
+| [v0.2.0](docs/task-2.md) | Making KelanaAI Smarter                                    | [Commit ac1513d](https://github.com/adisthya/alkademi-main-kelana-ai/commit/ac1513d2b88bfa5ad4874d70b3a5e046360f052e) |
+| [v0.3.0](docs/task-3.md) | Teaching KelanaAI to Communicate (REST API dengan FastAPI) | [Commit 6ad973f](https://github.com/adisthya/alkademi-main-kelana-ai/commit/6ad973f5cb76018856e39cb2f179b549716652da) |
