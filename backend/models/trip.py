@@ -16,8 +16,3 @@ class TripResponse(TripRequest):
   travel_season: str
   recommended_places: list[str]
   recommended_transportion: str
-
-class TripData(str, Enum):
-  categories = "categories"
-  places = "places"
-  transportation = "transportation"

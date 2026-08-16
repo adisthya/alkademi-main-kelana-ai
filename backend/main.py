@@ -28,18 +28,17 @@ def health():
    "status": "ok"
  }
 
-@v1_router.get(path="/trips/{data}", response_model=list[str], tags=["Trips"])
-def get_trip_data(data: TripData):
-  if data is TripData.categories:
-    return get_trip_categories()
-  elif data is TripData.places:
-    return get_trip_places()
-  elif data is TripData.transportation:
-    return get_trip_transportation()
-  else:
-    return []
+@v1_router.get(path="/recommendations", response_model=list[str], tags=["Trip Data"])
+def get_recommendations():
+  return get_trip_places()
 
+@v1_router.get(path="/transportations", response_model=list[str], tags=["Trip Data"])
+def get_transportations():
+  return get_trip_transportation()
 
+@v1_router.get(path="/categories", response_model=list[str], tags=["Trip Data"])
+def get_categories():
+  return get_trip_categories()
 
 @v1_router.post(path="/trips", response_model=TripResponse, tags=["Trips"])
 def create_trip(request: TripRequest):
