@@ -2,20 +2,27 @@
 
 ## Requirements
 
-Implementasi Schema & REST API (`backend/main.py`)
-Pydantic Model: Buat model validasi request body `TripRequest` yang menerima:
+1. Tambahkan Endpoint Baru (backend/main.py)
+   - Endpoint — `GET /api/v1/recommendations`
+     - Fungsi: Mengembalikan daftar rekomendasi tempat wisata.
+     - Return format (Python List): `["Tokyo Tower", "Mount Fuji", "Shibuya"]`.
 
-- `destination` (String)
-- `days` (Integer)
-- `budget` (Float)
+   - Endpoint — `GET /api/v1/transportations`
+     - Fungsi: Mengembalikan daftar pilihan moda transportasi.
+     - Return format (Python List): `["Bus", "Train", "Flight"]`.
 
-Endpoint 1 — `GET /`: Menampilkan teks sambutan JSON {"message": "Welcome to KelanaAI"}.
-Endpoint 2 — `GET /health`: Menampilkan status health check JSON {"status": "OK"}.
-Endpoint 3 — `POST /api/v1/trips`:
+2. Implementasi Schema & REST API (`backend/main.py`)
+   - Pydantic Model: Buat model validasi request body `TripRequest` yang menerima:
+     - `destination` (String)
+     - `days` (Integer)
+     - `budget` (Float)
 
-- Menerima JSON request berbasis `TripRequest`.
-- Impor dan panggil fungsi `calculate_daily_budget()` dan `get_trip_category()` dari `services/trip_service.py`.
-- Mengembalikan JSON response berisi rincian destinasi, anggaran, anggaran harian, dan kategori.
+   - Endpoint 1 — `GET /`: Menampilkan teks sambutan JSON {"message": "Welcome to KelanaAI"}.
+   - Endpoint 2 — `GET /health`: Menampilkan status health check JSON {"status": "OK"}.
+   - Endpoint 3 — `POST /api/v1/trips`:
+     - Menerima JSON request berbasis `TripRequest`.
+     - Impor dan panggil fungsi `calculate_daily_budget()` dan `get_trip_category()` dari `services/trip_service.py`.
+     - Mengembalikan JSON response berisi rincian destinasi, anggaran, anggaran harian, dan kategori.
 
 ## Example Output
 
