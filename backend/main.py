@@ -19,7 +19,7 @@ v1_router = APIRouter(prefix="/v1")
 app.include_router(v1_router)
 
 def trip_not_found(id: int | None):
-  return HTTPException(
+  raise HTTPException(
     status_code=404,
     detail=f"Trip {id} not found!" if id is not None else "Trip not found!"
   )
@@ -64,7 +64,7 @@ def get_trip(id: int, db: Session = Depends(get_db)):
   trip = find_trip(id, db)
 
   if (trip is None):
-    return trip_not_found(id)
+    trip_not_found(id)
 
   return trip
 
@@ -79,7 +79,7 @@ def put_trip(payload: TripUpdatePayload, db: Session = Depends(get_db)):
   trip = update_trip(payload, db)
 
   if (trip is None):
-    return trip_not_found(id=payload.id)
+    trip_not_found(id=payload.id)
 
   return trip
 
