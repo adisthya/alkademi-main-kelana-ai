@@ -1,6 +1,7 @@
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import TEXT
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 from config.database import Base
@@ -29,8 +30,7 @@ class Trip(Base):
   travel_season: Mapped[str]  = mapped_column(nullable=False)
   travel_style: Mapped[str]   = mapped_column(nullable=False)
   category: Mapped[str]       = mapped_column(nullable=False)
-  transportation: Mapped[str] = mapped_column(nullable=True)
-  places: Mapped[list[str]]   = mapped_column(JSONB, nullable=True)
+  ai_recommendation: Mapped[str] = mapped_column(TEXT, nullable=True)
 
 class TripPayload(BaseModel):
   destination: str
@@ -59,7 +59,6 @@ class TripResponse(BaseModel):
   travel_style: str
   travel_month: str
   travel_season: str
-  places: list[str]
-  transportation: str
+  ai_recommendation: str
 
   model_config = ConfigDict(from_attributes=True)

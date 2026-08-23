@@ -3,6 +3,7 @@ from typing import Optional, cast
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from services.bedrock_service import get_ai_recommendation
 from models.trip import Trip, TripPayload, TripUpdatePayload
 
 trip_categories = ["Backpacker", "Standard", "Luxury"]
@@ -122,8 +123,14 @@ def add_trip(input: TripPayload, db: Session) -> Trip:
   category = get_trip_category(budget=input.budget)
   daily_budget = calculate_daily_budget(budget=input.budget, days=input.days)
   travel_season = get_travel_season(travel_month=input.travel_month)
-  transportation = get_transportation(category)
-  places = get_recommended_places(input.destination)
+  ai_recommendation = get_ai_recommendation(
+    days=input.days,
+    destination=input.destination,
+    budget=input.budget,
+    currency=input.currency,
+    travel_style=input.travel_style,
+    travel_month=input.travel_month
+  )
 
   trip = Trip(
     destination=input.destination,
@@ -135,8 +142,7 @@ def add_trip(input: TripPayload, db: Session) -> Trip:
     travel_style=input.travel_style,
     travel_month=input.travel_month,
     travel_season=travel_season,
-    transportation=transportation,
-    places=places
+    ai_recommendation=ai_recommendation
   )
 
   db.add(trip)
@@ -165,16 +171,12 @@ def update_trip(input: TripUpdatePayload, db: Session) -> Optional[Trip]:
   if 'budget' in update_values:
       category = get_trip_category(trip.budget)
       trip.category = category
-      trip.transportation = get_transportation(category)
 
   if 'budget' in update_values or 'days' in update_values:
       trip.daily_budget = calculate_daily_budget(
           budget=trip.budget,
           days=trip.days
       )
-
-  if 'destination' in update_values:
-      trip.places = get_recommended_places(trip.destination)
 
   db.commit()
   db.refresh(trip)
