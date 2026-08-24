@@ -13,7 +13,7 @@ async def lifespan(app: FastAPI):
     init_db()  # Menjalankan Base.metadata.create_all
     yield
 
-app = FastAPI(title="KelanaAI", description="Your travel companion", version="0.4.0", lifespan=lifespan)
+app = FastAPI(title="KelanaAI", description="Your travel companion", version="0.5.0", lifespan=lifespan)
 v1_router = APIRouter(prefix="/v1")
 
 app.include_router(v1_router)
@@ -71,6 +71,17 @@ def get_trip(id: int, db: Session = Depends(get_db)):
 @v1_router.post(path="/trips", response_model=TripResponse, tags=["Trips"])
 def post_trip(payload: TripPayload, db: Session = Depends(get_db)):
   trip = add_trip(payload, db)
+
+  return trip
+
+@v1_router.post(path="/trips/{id}/generate", response_model=TripResponse, tags=["Trips"])
+def post_trip_generate(id: int, db: Session = Depends(get_db)):
+  trip = find_trip(id, db)
+
+  if trip is None:
+    trip_not_found(id)
+
+  trip = generate_ai_recommendation(trip, db)
 
   return trip
 

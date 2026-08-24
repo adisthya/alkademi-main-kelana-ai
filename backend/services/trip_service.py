@@ -151,8 +151,23 @@ def add_trip(input: TripPayload, db: Session) -> Trip:
 
   return trip
 
+def generate_ai_recommendation(trip: Trip, db: Session) -> Trip:
+  trip.ai_recommendation = get_ai_recommendation(
+    days=trip.days,
+    destination=trip.destination,
+    budget=trip.budget,
+    currency=trip.currency,
+    travel_style=trip.travel_style,
+    travel_month=trip.travel_month
+  )
+
+  db.commit()
+  db.refresh(trip)
+
+  return trip
+
 def update_trip(input: TripUpdatePayload, db: Session) -> Optional[Trip]:
-  trip = db.query(Trip).filter(Trip.id == input.id).first()
+  trip = find_trip(input.id, db)
 
   if trip is None:
       return None
@@ -177,6 +192,15 @@ def update_trip(input: TripUpdatePayload, db: Session) -> Optional[Trip]:
           budget=trip.budget,
           days=trip.days
       )
+
+  trip.ai_recommendation = get_ai_recommendation(
+    days=cast(int, input.days),
+    destination=cast(str, input.destination),
+    budget=cast(int, input.budget),
+    currency=cast(str, input.currency),
+    travel_style=cast(str, input.travel_style),
+    travel_month=cast(str, input.travel_month)
+  )
 
   db.commit()
   db.refresh(trip)
