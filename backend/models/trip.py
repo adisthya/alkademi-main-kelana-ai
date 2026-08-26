@@ -1,24 +1,14 @@
+from datetime import datetime
+import os
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import TEXT
+from sqlalchemy import DateTime, func, TEXT
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.postgresql import JSONB
 from config.database import Base
-
 class Trip(Base):
   __tablename__  = "trips"
-  # id             = Column(Integer, primary_key=True)
-  # destination    = Column(String, nullable=False)
-  # days           = Column(Integer, nullable=False)
-  # budget         = Column(Float, nullable=False)
-  # category       = Column(String, nullable=False)
-  # daily_budget   = Column(Float, nullable=False)
-  # travel_style   = Column(String, nullable=False)
-  # travel_month   = Column(String, nullable=False)
-  # travel_season  = Column(String, nullable=False)
-  # transportation = Column(String, nullable=True)
-  # places         = Column(JSONB, nullable=True, default=[])
+  __table_args__ = {"schema": os.getenv('DATABASE_SCHEMA', 'kelana_ai')}
 
   id: Mapped[int]             = mapped_column(primary_key=True, autoincrement=True)
   destination: Mapped[str]    = mapped_column(nullable=False)
@@ -31,6 +21,19 @@ class Trip(Base):
   travel_style: Mapped[str]   = mapped_column(nullable=False)
   category: Mapped[str]       = mapped_column(nullable=False)
   ai_recommendation: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+  # Automatically populated on INSERT by the database
+  created_at: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True),
+    server_default=func.now()
+  )
+
+  # Automatically populated on INSERT and updated on every UPDATE
+  updated_at: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True),
+    server_default=func.now(),
+    onupdate=func.now()
+  )
 
 class TripPayload(BaseModel):
   destination: str
@@ -53,12 +56,13 @@ class TripResponse(BaseModel):
   id: int
   destination: str
   days: int
+  currency: str
   budget: float
   category: str
   daily_budget: float
   travel_style: str
   travel_month: str
   travel_season: str
-  ai_recommendation: str
+  ai_recommendation: Optional[str] = None
 
   model_config = ConfigDict(from_attributes=True)

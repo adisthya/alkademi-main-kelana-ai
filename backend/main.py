@@ -1,6 +1,9 @@
 from contextlib import asynccontextmanager
+from locale import currency
+import os
 from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from config.database import init_db, get_db
@@ -17,6 +20,13 @@ app = FastAPI(title="KelanaAI", description="Your travel companion", version="0.
 v1_router = APIRouter(prefix="/v1")
 
 app.include_router(v1_router)
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=os.getenv('FRONTEND_URL', 'http://localhost:3000'),
+  allow_credentials=True,
+  allow_methods=["*"],
+  allow_headers=["*"],
+)
 
 def trip_not_found(id: int | None):
   raise HTTPException(
@@ -72,7 +82,18 @@ def get_trip(id: int, db: Session = Depends(get_db)):
 def post_trip(payload: TripPayload, db: Session = Depends(get_db)):
   trip = add_trip(payload, db)
 
-  return trip
+  return TripResponse(
+    id=trip.id,
+    destination=trip.destination,
+    currency=trip.currency,
+    budget=trip.budget,
+    days=trip.days,
+    daily_budget=trip.daily_budget,
+    category=trip.category,
+    travel_month=trip.travel_month,
+    travel_season=trip.travel_season,
+    travel_style=trip.travel_style
+  )
 
 @v1_router.post(path="/trips/{id}/generate", response_model=TripResponse, tags=["Trips"])
 def post_trip_generate(id: int, db: Session = Depends(get_db)):

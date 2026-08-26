@@ -95,7 +95,7 @@ def get_ai_recommendation(
   travel_month: str
 ) -> str:
 	prompt = (
-		f"As an experienced travel planner, arrange {days}-day itinerary for {destination}. With budget {currency} {budget}, travel style {travel_style}, and planned arrival on {travel_month}, arrange itinerarries in daily basis activities, include: daily budget estimation, local culinaries, cultural or historical sites, night life, and transport. Format your answer in clear and readable markdown."
+		f"As an experienced travel planner, arrange {days}-day itinerary for {destination}. With budget {currency} {budget}, travel style {travel_style}, and planned arrival on {travel_month}, arrange itinerarries in daily basis activities, include: daily budget estimation, local culinaries, cultural or historical sites, night life, and transport. Give response in indonesian language if the currency is IDR. Format your answer in clear and readable markdown. "
 	)
 
 	client = configure_bedrock_client()
