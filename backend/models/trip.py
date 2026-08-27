@@ -1,8 +1,9 @@
 from datetime import datetime
 import os
+from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import DateTime, func, TEXT
 from sqlalchemy.orm import Mapped, mapped_column
 from config.database import Base
@@ -66,3 +67,37 @@ class TripResponse(BaseModel):
   ai_recommendation: Optional[str] = None
 
   model_config = ConfigDict(from_attributes=True)
+
+class TripSortBy(str, Enum):
+  created_at_desc = "created_at_desc"
+  created_at_asc  = "created_at_asc"
+  budget_desc     = "budget_desc"
+  budget_asc      = "budget_asc"
+
+class TripListParams(BaseModel):
+  search:       Optional[str] = None
+  currency:     Optional[str] = None
+  category:     Optional[str] = None
+  travel_style: Optional[str] = None
+  travel_month: Optional[str] = None
+  sort_by:      TripSortBy    = TripSortBy.created_at_desc
+  page:         int           = Field(default=1, ge=1)
+  page_size:    int           = Field(default=10, ge=1, le=100)
+
+class TripListResponse(BaseModel):
+  data:        list[TripResponse]
+  total:       int
+  page:        int
+  page_size:   int
+  total_pages: int
+
+class LabeledOption(BaseModel):
+  value: str
+  label: str
+
+class TripOptionsResponse(BaseModel):
+  currencies:      list[str]
+  travel_styles:   list[LabeledOption]
+  months:          list[LabeledOption]
+  categories:      list[str]
+  transportations: list[str]

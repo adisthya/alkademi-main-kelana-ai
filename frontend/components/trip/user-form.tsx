@@ -3,12 +3,14 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '../ui/field';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';
-import { generateTrip, TripPayload } from '@/services/trip.service';
+import { generateTrip, getOptions, TripOptions, TripPayload } from '@/services/trip.service';
+import { Navigation } from 'lucide-react';
 
 const requiredNumber = (requiredMessage: string, positiveMessage: string) =>
   z.preprocess(
@@ -19,7 +21,11 @@ const requiredNumber = (requiredMessage: string, positiveMessage: string) =>
 const schema = z.object({
   id: z.number().optional(),
   destination: z.string().min(1, 'Kota tujuan harus diisi.'),
-  currency: z.string().min(1, 'Mata uang harus diisi.').max(3, 'Kode mata uang maksimal 3 huruf.').toUpperCase(),
+  currency: z
+    .string()
+    .min(1, 'Mata uang harus diisi.')
+    .max(3, 'Kode mata uang maksimal 3 huruf.')
+    .toUpperCase(),
   budget: requiredNumber('Budget perjalanan harus diisi', 'Budget perjalanan harus di atas 0.'),
   days: requiredNumber('Durasi perjalanan harus diisi.', 'Durasi perjalanan harus di atas 0.'),
   travel_style: z.string().min(1, 'Gaya perjalanan harus diisi.'),
@@ -28,6 +34,12 @@ const schema = z.object({
 
 export function UserForm() {
   const router = useRouter();
+  const [options, setOptions] = useState<TripOptions | null>(null);
+
+  useEffect(() => {
+    getOptions().then(setOptions);
+  }, []);
+
   const form = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -41,34 +53,6 @@ export function UserForm() {
   });
 
   const { isSubmitting } = form.formState;
-
-  const currencies = ['EUR', 'IDR', 'USD', 'JPY', 'SGD', 'RUB'].sort();
-  const travelStyle = [
-    'Sendiri',
-    'Sendiri (paling hemat)',
-    'Sendiri (pengalaman terbaik)',
-    'Bersama pasangan',
-    'Bersama pasangan (paling hemat)',
-    'Bersama pasangan (pengalaman terbaik)',
-    'Keluarga',
-    'Keluarga (paling hemat)',
-    'Keluarga (pengalaman terbaik)',
-    'Beri aku rekomendasi yang unik!',
-  ];
-  const months = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-  ];
 
   const onSubmit = async (data: TripPayload) => {
     try {
@@ -101,12 +85,12 @@ export function UserForm() {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel id={field.name}>Destinasi Tujuan</FieldLabel>
+                <FieldLabel id={field.name}>Destinasi</FieldLabel>
                 <Input
                   {...field}
                   id={field.name}
                   aria-invalid={fieldState.invalid}
-                  placeholder="Mau jalan-jalan kemana kita?"
+                  placeholder="Kemana tujuanmu?"
                   autoComplete="off"
                   disabled={isSubmitting}
                 />
@@ -120,14 +104,18 @@ export function UserForm() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel id={field.name}>Mata Uang</FieldLabel>
-                <Select {...field} onValueChange={field.onChange} id={field.name} disabled={isSubmitting}>
+                <Select
+                  {...field}
+                  onValueChange={field.onChange}
+                  id={field.name}
+                  disabled={isSubmitting || !options}>
                   <SelectTrigger aria-invalid={fieldState.invalid}>
                     <SelectValue placeholder="Pilih mata uang" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger>
                     <SelectGroup>
-                      {currencies.map((value, index) => (
-                        <SelectItem key={index} value={value}>
+                      {(options?.currencies ?? []).map(value => (
+                        <SelectItem key={value} value={value}>
                           {value}
                         </SelectItem>
                       ))}
@@ -169,7 +157,7 @@ export function UserForm() {
                   aria-invalid={fieldState.invalid}
                   type="number"
                   value={(field.value as string | number | undefined) ?? ''}
-                  placeholder="Mau berapa lama jalan-jalannya?"
+                  placeholder="Berapa hari perjalananmu?"
                   autoComplete="off"
                   disabled={isSubmitting}
                 />
@@ -183,15 +171,20 @@ export function UserForm() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel id={field.name}>Gaya Perjalanan</FieldLabel>
-                <Select {...field} onValueChange={field.onChange} id={field.name} disabled={isSubmitting}>
+                <Select
+                  {...field}
+                  onValueChange={field.onChange}
+                  id={field.name}
+                  disabled={isSubmitting || !options}
+                  items={options?.travel_styles}>
                   <SelectTrigger aria-invalid={fieldState.invalid}>
                     <SelectValue placeholder="Pilih gaya perjalanan" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger>
                     <SelectGroup>
-                      {travelStyle.map((item, index) => (
-                        <SelectItem key={index} value={item}>
-                          {item}
+                      {(options?.travel_styles ?? []).map(style => (
+                        <SelectItem key={style.value} value={style.value}>
+                          {style.label}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -207,15 +200,20 @@ export function UserForm() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel id={field.name}>Waktu Perjalanan (Bulan)</FieldLabel>
-                <Select {...field} onValueChange={field.onChange} id={field.name} disabled={isSubmitting}>
+                <Select
+                  {...field}
+                  onValueChange={field.onChange}
+                  id={field.name}
+                  disabled={isSubmitting || !options}
+                  items={options?.months}>
                   <SelectTrigger aria-invalid={fieldState.invalid}>
                     <SelectValue placeholder="Pilih bulan" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger>
                     <SelectGroup>
-                      {months.map((item, index) => (
-                        <SelectItem key={index} value={item}>
-                          {item}
+                      {(options?.months ?? []).map(month => (
+                        <SelectItem key={month.value} value={month.value}>
+                          {month.label}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -230,21 +228,19 @@ export function UserForm() {
 
           {/* Root / server error */}
           {form.formState.errors.root && (
-            <div role="alert" className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {form.formState.errors.root.message}
             </div>
           )}
 
           <div className="flex flex-row gap-2 w-full justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Spinner className="size-4" /> : 'Generate'}
+            <Button type="submit" disabled={isSubmitting} className="w-24">
+              Mulai <Navigation data-icon="inline-end" />
             </Button>
-            <Button
-              type="reset"
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={() => form.reset()}>
-              Reset
+            <Button type="reset" variant="outline" disabled={isSubmitting} onClick={() => form.reset()}>
+              Ulangi
             </Button>
           </div>
         </FieldGroup>

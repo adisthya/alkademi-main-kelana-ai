@@ -17,7 +17,7 @@ export default function Home() {
           <Card className="relative w-full rounded-none border-t-4 border-t-amber-700 shadow-none sm:-mt-6 sm:max-w-lg sm:rounded-xl sm:shadow-lg">
             <CardHeader>
               <CardTitle>
-                <h2 className="text-xl">Buat Itinerary</h2>
+                <h2 className="text-xl">Rencana Perjalanan</h2>
               </CardTitle>
               <CardDescription>Isi detail perjalananmu di bawah ini.</CardDescription>
             </CardHeader>

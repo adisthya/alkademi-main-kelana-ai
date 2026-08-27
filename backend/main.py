@@ -65,9 +65,13 @@ def get_transportations():
 def get_categories():
   return get_trip_categories()
 
-@v1_router.get(path="/trips", response_model=list[TripResponse], tags=["Trips"])
-def get_all_trips(db: Session = Depends(get_db)):
-  return list_trips(db)
+@v1_router.get(path="/trips-options", response_model=TripOptionsResponse, tags=["Trip Data"])
+def get_trips_options():
+  return get_trip_options()
+
+@v1_router.get(path="/trips", response_model=TripListResponse, tags=["Trips"])
+def get_all_trips(params: TripListParams = Depends(), db: Session = Depends(get_db)):
+  return list_trips(params, db)
 
 @v1_router.get(path="/trips/{id}", response_model=TripResponse, tags=["Trips"])
 def get_trip(id: int, db: Session = Depends(get_db)):

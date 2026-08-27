@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { PanelRightOpen, ShipWheel } from 'lucide-react';
+import { PanelRightOpen, ShipWheel, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ColorModeToggle } from '@/components/ui/color-mode';
@@ -71,7 +71,7 @@ export function Header() {
 
         {/* Mobile: drawer trigger — visible only on mobile */}
         <div className="flex md:hidden">
-          <Drawer modal swipeDirection="right">
+          <Drawer modal swipeDirection="right" showSwipeHandle>
             <DrawerTrigger
               render={
                 <Button size="icon" variant="ghost" aria-label="Open menu">
@@ -80,8 +80,15 @@ export function Header() {
               }
             />
             <DrawerContent>
-              <DrawerHeader className="text-left">
+              <DrawerHeader className="flex-row items-center justify-between">
                 <DrawerTitle>Menu</DrawerTitle>
+                <DrawerClose
+                  render={
+                    <Button size="icon" variant="ghost" aria-label="Close menu">
+                      <X />
+                    </Button>
+                  }
+                />
               </DrawerHeader>
 
               {/* Nav links */}
@@ -102,7 +109,7 @@ export function Header() {
                   Sign In
                 </Button>
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-sm text-muted-foreground">Color mode</span>
+                  <span className="text-sm text-muted-foreground">Tema</span>
                   <ColorModeToggle />
                 </div>
               </DrawerFooter>

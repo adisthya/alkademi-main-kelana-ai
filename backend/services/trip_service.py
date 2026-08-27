@@ -1,13 +1,14 @@
 from typing import Optional, cast
 
-from sqlalchemy import select
+from sqlalchemy import select, func, asc, desc
 from sqlalchemy.orm import Session
 
 from services.bedrock_service import get_ai_recommendation
-from models.trip import Trip, TripPayload, TripUpdatePayload
+from models.trip import Trip, TripPayload, TripUpdatePayload, TripListParams, TripListResponse, TripResponse, TripSortBy
+from config.trip_options import currencies, travel_styles, categories, transportations, months, season_peak, season_holiday, season_regular
 
-trip_categories = ["Backpacker", "Standard", "Luxury"]
-trip_transportations = ["Flight", "Train", "Bus"]
+# Legacy inline data kept for backward-compatibility with existing routes
+# (/v1/categories, /v1/transportations) — these still reference the config values.
 trip_places = {
   "japan": [
     "Tokyo Tower",
@@ -28,10 +29,10 @@ def calculate_daily_budget(budget: float, days: int):
   return budget/days
 
 def get_trip_categories():
-  return trip_categories;
+  return categories
 
 def get_trip_transportation():
-  return trip_transportations;
+  return transportations
 
 def get_trip_places():
   places: list[str] = []
@@ -42,32 +43,41 @@ def get_trip_places():
 
   return places
 
+def get_trip_options():
+  return {
+    "currencies": currencies,
+    "travel_styles": travel_styles,
+    "months": months,
+    "categories": categories,
+    "transportations": transportations,
+  }
+
 def get_trip_category(budget: float):
   if (budget < 1000):
-    return trip_categories[0]
+    return categories[0]
   elif (budget <= 3000):
-    return trip_categories[1]
+    return categories[1]
   else:
-    return trip_categories[2]
+    return categories[2]
 
 def get_recommended_places(destination: str):
   return trip_places.get(destination.casefold(), [])
 
 def get_transportation(category: str):
   if (category.casefold() == "luxury"):
-    return trip_transportations[0]
+    return transportations[0]
   elif (category.casefold() == "standard"):
-    return trip_transportations[1]
+    return transportations[1]
   else:
-    return trip_transportations[2]
+    return transportations[2]
 
 def get_travel_season(travel_month: str) -> str:
   if (travel_month.casefold() == "december"):
-    return "Peak Season"
+    return season_peak
   elif (travel_month.casefold() == "june"):
-    return "Holiday Season"
+    return season_holiday
   else:
-    return "Regular Season"
+    return season_regular
 
 def ask_questions():
   destinations: list = []
@@ -113,8 +123,50 @@ def give_answers(
       else:
         print(f"\nNo recommendation for {destination}.")
 
-def list_trips(db: Session) -> list[Trip]:
-  return db.query(Trip).all()
+def list_trips(params: TripListParams, db: Session) -> TripListResponse:
+  query = select(Trip)
+
+  # Search by destination (case-insensitive substring)
+  if params.search:
+    query = query.where(Trip.destination.ilike(f"%{params.search}%"))
+
+  # Exact-match filters
+  if params.currency:
+    query = query.where(Trip.currency == params.currency)
+  if params.category:
+    query = query.where(Trip.category == params.category)
+  if params.travel_style:
+    query = query.where(Trip.travel_style == params.travel_style)
+  if params.travel_month:
+    query = query.where(Trip.travel_month == params.travel_month)
+
+  # Count total matching rows before applying pagination
+  count_query = select(func.count()).select_from(query.subquery())
+  total: int = db.execute(count_query).scalar_one()
+
+  # Sorting
+  sort_map = {
+    TripSortBy.created_at_desc: desc(Trip.created_at),
+    TripSortBy.created_at_asc:  asc(Trip.created_at),
+    TripSortBy.budget_desc:     desc(Trip.budget),
+    TripSortBy.budget_asc:      asc(Trip.budget),
+  }
+  query = query.order_by(sort_map[params.sort_by])
+
+  # Pagination
+  offset = (params.page - 1) * params.page_size
+  query = query.offset(offset).limit(params.page_size)
+
+  trips = db.execute(query).scalars().all()
+  total_pages = max(1, -(-total // params.page_size))  # ceiling division
+
+  return TripListResponse(
+    data=[TripResponse.model_validate(trip) for trip in trips],
+    total=total,
+    page=params.page,
+    page_size=params.page_size,
+    total_pages=total_pages,
+  )
 
 def find_trip(id: int, db: Session) -> Trip | None:
   return db.get(Trip, id)
