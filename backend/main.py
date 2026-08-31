@@ -1,37 +1,76 @@
 from contextlib import asynccontextmanager
-from locale import currency
+import logging
 import os
-from fastapi import FastAPI, APIRouter, HTTPException, Depends
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from config.database import init_db, get_db
+from config.open_api import configure_openapi
+from controllers import auth, users, trips
+from config.database import engine
+from models.common import ApiErrorResponse
 from models.trip import *
 from services.trip_service import *
 
+logger = logging.getLogger("kelanaai")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Establishing database connection and perform migration...")
-    init_db()  # Menjalankan Base.metadata.create_all
+    logger.info("Establishing database connection and perform migrations.")
+    Base.metadata.create_all(bind=engine)
     yield
 
-app = FastAPI(title="KelanaAI", description="Your travel companion", version="0.5.0", lifespan=lifespan)
-v1_router = APIRouter(prefix="/v1")
+app = FastAPI(
+  title="KelanaAI",
+  description="Your travel companion",
+  favicon="/favicon.ico",
+  swagger_favicon_url="/favicon.ico",
+  version=os.getenv("API_VERSION", "0.0.0"),
+  lifespan=lifespan,
+  responses={
+    422: {"model": ApiErrorResponse, "description": "Validation Error"},
+    500: {"model": ApiErrorResponse, "description": "Internal Server Error"},
+  }
+)
 
-app.include_router(v1_router)
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=os.getenv('FRONTEND_URL', 'http://localhost:3000'),
+  allow_origins=[os.getenv('FRONTEND_URL', 'http://localhost:3000')],
   allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"],
 )
 
-def trip_not_found(id: int | None):
-  raise HTTPException(
-    status_code=404,
-    detail=f"Trip {id} not found!" if id is not None else "Trip not found!"
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(trips.router)
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+  return JSONResponse(
+    status_code=exc.status_code,
+    content={"status": exc.status_code, "message": str(exc.detail)}
+  )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+  message = "; ".join(
+    f"{'.'.join(str(loc) for loc in error['loc'])}: {error['msg']}"
+    for error in exc.errors()
+  )
+  return JSONResponse(
+    status_code=422,
+    content={"status": 422, "message": message}
+  )
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+  logger.exception("Unhandled exception while processing request")
+  return JSONResponse(
+    status_code=500,
+    content={"status": 500, "message": "Internal server error"}
   )
 
 @app.get('/favicon.ico', include_in_schema=False)
@@ -41,84 +80,12 @@ async def favicon():
       media_type='image/x-icon'
     )
 
-@app.get("/")
+@app.get(path="/", include_in_schema=False)
 def index():
- return {
-   "message" : "Welcome to KelanaAI...!"
- }
+ return RedirectResponse('/docs', status.HTTP_308_PERMANENT_REDIRECT)
 
-@app.get("/health")
+@app.get(path="/health", include_in_schema=False)
 def health():
  return {
    "status": "ok"
  }
-
-@v1_router.get(path="/recommendations", response_model=list[str], tags=["Trip Data"])
-def get_recommendations():
-  return get_trip_places()
-
-@v1_router.get(path="/transportations", response_model=list[str], tags=["Trip Data"])
-def get_transportations():
-  return get_trip_transportation()
-
-@v1_router.get(path="/categories", response_model=list[str], tags=["Trip Data"])
-def get_categories():
-  return get_trip_categories()
-
-@v1_router.get(path="/trips-options", response_model=TripOptionsResponse, tags=["Trip Data"])
-def get_trips_options():
-  return get_trip_options()
-
-@v1_router.get(path="/trips", response_model=TripListResponse, tags=["Trips"])
-def get_all_trips(params: TripListParams = Depends(), db: Session = Depends(get_db)):
-  return list_trips(params, db)
-
-@v1_router.get(path="/trips/{id}", response_model=TripResponse, tags=["Trips"])
-def get_trip(id: int, db: Session = Depends(get_db)):
-  trip = find_trip(id, db)
-
-  if (trip is None):
-    trip_not_found(id)
-
-  return trip
-
-@v1_router.post(path="/trips", response_model=TripResponse, tags=["Trips"])
-def post_trip(payload: TripPayload, db: Session = Depends(get_db)):
-  trip = add_trip(payload, db)
-
-  return TripResponse(
-    id=trip.id,
-    destination=trip.destination,
-    currency=trip.currency,
-    budget=trip.budget,
-    days=trip.days,
-    daily_budget=trip.daily_budget,
-    category=trip.category,
-    travel_month=trip.travel_month,
-    travel_season=trip.travel_season,
-    travel_style=trip.travel_style
-  )
-
-@v1_router.post(path="/trips/{id}/generate", response_model=TripResponse, tags=["Trips"])
-def post_trip_generate(id: int, db: Session = Depends(get_db)):
-  trip = find_trip(id, db)
-
-  if trip is None:
-    trip_not_found(id)
-
-  trip = generate_ai_recommendation(trip, db)
-
-  return trip
-
-@v1_router.put(path="/trips", response_model=TripResponse, tags=["Trips"])
-def put_trip(payload: TripUpdatePayload, db: Session = Depends(get_db)):
-  trip = update_trip(payload, db)
-
-  if (trip is None):
-    trip_not_found(id=payload.id)
-
-  return trip
-
-@v1_router.delete(path="/trips/{id}", status_code=204, tags=["Trips"])
-def delete_trip(id: int, db: Session = Depends(get_db)):
-  remove_trip(id, db)

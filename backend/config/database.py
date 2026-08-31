@@ -27,6 +27,6 @@ def get_db() -> Generator[Session]:
     db.close()
 
 # create all tables
-def init_db() -> None:
-  """Create all SQLAlchemy tables for the configured database."""
-  Base.metadata.create_all(bind=engine)
+# def init_db() -> None:
+#   """Create all SQLAlchemy tables for the configured database."""
+#   Base.metadata.create_all(bind=engine)

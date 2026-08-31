@@ -4,12 +4,17 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import DateTime, func, TEXT
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, ForeignKey, func, TEXT
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from models.user import UserResponse
 from config.database import Base
+
+schema = os.getenv('DATABASE_SCHEMA', 'kelana_ai')
+
 class Trip(Base):
   __tablename__  = "trips"
-  __table_args__ = {"schema": os.getenv('DATABASE_SCHEMA', 'kelana_ai')}
+  __table_args__ = {"schema": schema}
 
   id: Mapped[int]             = mapped_column(primary_key=True, autoincrement=True)
   destination: Mapped[str]    = mapped_column(nullable=False)
@@ -35,6 +40,9 @@ class Trip(Base):
     server_default=func.now(),
     onupdate=func.now()
   )
+
+  user_id: Mapped[int]        = mapped_column(ForeignKey(f"{schema}.users.id"), nullable=False)
+  user                        = relationship("User", back_populates="trips")
 
 class TripPayload(BaseModel):
   destination: str
@@ -65,6 +73,7 @@ class TripResponse(BaseModel):
   travel_month: str
   travel_season: str
   ai_recommendation: Optional[str] = None
+  user: UserResponse
 
   model_config = ConfigDict(from_attributes=True)
 

@@ -3,9 +3,10 @@ from typing import Optional, cast
 from sqlalchemy import select, func, asc, desc
 from sqlalchemy.orm import Session
 
-from services.bedrock_service import get_ai_recommendation
+from config.trip_options import *
+from models.user import User
 from models.trip import Trip, TripPayload, TripUpdatePayload, TripListParams, TripListResponse, TripResponse, TripSortBy
-from config.trip_options import currencies, travel_styles, categories, transportations, months, season_peak, season_holiday, season_regular
+from services.bedrock_service import get_ai_recommendation
 
 # Legacy inline data kept for backward-compatibility with existing routes
 # (/v1/categories, /v1/transportations) — these still reference the config values.
@@ -123,8 +124,10 @@ def give_answers(
       else:
         print(f"\nNo recommendation for {destination}.")
 
-def list_trips(params: TripListParams, db: Session) -> TripListResponse:
+def list_trips(params: TripListParams, actor: User, db: Session) -> TripListResponse:
   query = select(Trip)
+
+  query = query.where(Trip.user_id == actor.id)
 
   # Search by destination (case-insensitive substring)
   if params.search:
@@ -168,10 +171,10 @@ def list_trips(params: TripListParams, db: Session) -> TripListResponse:
     total_pages=total_pages,
   )
 
-def find_trip(id: int, db: Session) -> Trip | None:
-  return db.get(Trip, id)
+def find_trip(id: int, actor: User, db: Session) -> Trip | None:
+  return db.query(Trip).filter(Trip.id == id, Trip.user == actor).first()
 
-def add_trip(input: TripPayload, db: Session) -> Trip:
+def add_trip(input: TripPayload, actor: User, db: Session) -> Trip:
   category = get_trip_category(budget=input.budget)
   daily_budget = calculate_daily_budget(budget=input.budget, days=input.days)
   travel_season = get_travel_season(travel_month=input.travel_month)
@@ -197,13 +200,15 @@ def add_trip(input: TripPayload, db: Session) -> Trip:
     ai_recommendation=ai_recommendation
   )
 
+  trip.user = actor
+
   db.add(trip)
   db.commit()
   db.refresh(trip)
 
   return trip
 
-def generate_ai_recommendation(trip: Trip, db: Session) -> Trip:
+def generate_ai_recommendation(trip: Trip, actor: User, db: Session) -> Trip:
   trip.ai_recommendation = get_ai_recommendation(
     days=trip.days,
     destination=trip.destination,
@@ -213,13 +218,15 @@ def generate_ai_recommendation(trip: Trip, db: Session) -> Trip:
     travel_month=trip.travel_month
   )
 
+  trip.user = actor
+
   db.commit()
   db.refresh(trip)
 
   return trip
 
-def update_trip(input: TripUpdatePayload, db: Session) -> Optional[Trip]:
-  trip = find_trip(input.id, db)
+def update_trip(input: TripUpdatePayload, actor: User, db: Session) -> Optional[Trip]:
+  trip = find_trip(input.id, actor, db)
 
   if trip is None:
       return None
@@ -259,8 +266,8 @@ def update_trip(input: TripUpdatePayload, db: Session) -> Optional[Trip]:
 
   return trip
 
-def remove_trip(id: int, db: Session) -> None:
-  trip = find_trip(id, db)
+def remove_trip(id: int, actor: User, db: Session) -> None:
+  trip = find_trip(id, actor, db)
 
   if (trip is None):
     return
