@@ -12,6 +12,9 @@ import { Spinner } from '../ui/spinner';
 import { generateTrip, getOptions, TripOptions, TripPayload } from '@/services/trip.service';
 import { Navigation } from 'lucide-react';
 
+// Darker border on the desktop frosted-glass card so fields stay legible against the translucent background.
+const fieldBorderClassName = 'xl:border-black/20 dark:xl:border-white/10';
+
 const requiredNumber = (requiredMessage: string, positiveMessage: string) =>
   z.preprocess(
     value => (value === '' || value === null ? undefined : value),
@@ -93,6 +96,7 @@ export function UserForm() {
                   placeholder="Kemana tujuanmu?"
                   autoComplete="off"
                   disabled={isSubmitting}
+                  className={fieldBorderClassName}
                 />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
@@ -109,7 +113,7 @@ export function UserForm() {
                   onValueChange={field.onChange}
                   id={field.name}
                   disabled={isSubmitting || !options}>
-                  <SelectTrigger aria-invalid={fieldState.invalid}>
+                  <SelectTrigger aria-invalid={fieldState.invalid} className={fieldBorderClassName}>
                     <SelectValue placeholder="Pilih mata uang" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger>
@@ -140,6 +144,7 @@ export function UserForm() {
                   value={(field.value as string | number | undefined) ?? ''}
                   placeholder="Berapa estimasi budget-nya?"
                   disabled={isSubmitting}
+                  className={fieldBorderClassName}
                 />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
@@ -160,6 +165,7 @@ export function UserForm() {
                   placeholder="Berapa hari perjalananmu?"
                   autoComplete="off"
                   disabled={isSubmitting}
+                  className={fieldBorderClassName}
                 />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
@@ -177,7 +183,7 @@ export function UserForm() {
                   id={field.name}
                   disabled={isSubmitting || !options}
                   items={options?.travel_styles}>
-                  <SelectTrigger aria-invalid={fieldState.invalid}>
+                  <SelectTrigger aria-invalid={fieldState.invalid} className={fieldBorderClassName}>
                     <SelectValue placeholder="Pilih gaya perjalanan" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger>
@@ -206,7 +212,7 @@ export function UserForm() {
                   id={field.name}
                   disabled={isSubmitting || !options}
                   items={options?.months}>
-                  <SelectTrigger aria-invalid={fieldState.invalid}>
+                  <SelectTrigger aria-invalid={fieldState.invalid} className={fieldBorderClassName}>
                     <SelectValue placeholder="Pilih bulan" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger>
@@ -224,7 +230,7 @@ export function UserForm() {
             )}
           />
 
-          <FieldSeparator />
+          <FieldSeparator separatorClassName="xl:bg-black/20 dark:xl:bg-white/10" />
 
           {/* Root / server error */}
           {form.formState.errors.root && (
@@ -239,7 +245,7 @@ export function UserForm() {
             <Button type="submit" disabled={isSubmitting} className="w-24">
               Mulai <Navigation data-icon="inline-end" />
             </Button>
-            <Button type="reset" variant="outline" disabled={isSubmitting} onClick={() => form.reset()}>
+            <Button type="reset" variant="ghost" disabled={isSubmitting} onClick={() => form.reset()}>
               Ulangi
             </Button>
           </div>

@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
-function TripListItemSkeleton() {
+export function TripListItemSkeleton() {
   return (
     <div className="flex items-center gap-3.5 rounded-md border border-border px-4 py-3.5">
       {/* Icon media */}

@@ -22,6 +22,7 @@ export function TripListItem({ trip, months, travelStyles }: TripListItemProps) 
   return (
     <Item
       variant="outline"
+      className="shadow"
       render={
         <Link href={`/trips/${trip.id}`} aria-label={`Lihat rencana perjalanan ke ${trip.destination}`} />
       }>

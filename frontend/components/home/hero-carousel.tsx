@@ -22,9 +22,9 @@ export const heroSlides = [
     label: 'Komodo, NTT',
   },
   {
-    src: '/places/bedugul.jpg',
-    alt: 'Bedugul, Bali',
-    label: 'Bedugul, Bali',
+    src: '/places/pura-ulun.jpg',
+    alt: 'Pura Ulun Danu Batur, Bali',
+    label: 'Pura Ulun Danu Batur, Bali',
   },
 ];
 
@@ -89,7 +89,7 @@ export function HeroCarousel({ onSlideChange }: HeroCarouselProps) {
 
       {/* Dot indicators — bottom left */}
       <div
-        className="absolute bottom-4 left-4 flex gap-1.5 sm:left-8 md:left-12"
+        className="absolute bottom-4 pl-4 xl:bottom-25 left-0 flex gap-1.5 sm:pl-8 md:pl-12 xl:pl-12 2xl:pl-20"
         role="tablist"
         aria-label="Carousel slides">
         {heroSlides.map((_, i) => (

@@ -1,57 +1,29 @@
-'use client';
-
+import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { PanelRightOpen, ShipWheel, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ColorModeToggle } from '@/components/ui/color-mode';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerClose,
-  DrawerTrigger,
-  DrawerFooter,
-} from '@/components/ui/drawer';
-import { Separator } from '@/components/ui/separator';
+import { buttonVariants } from '@/components/ui/button';
+import { KelanaAiLogo, KelanaAiText } from './kelana-ai';
+import { NavLink, NavLinkItem } from './nav-link';
+import { HeaderDrawer } from './header-drawer';
 
-const navLinks = [
+const navLinks: NavLinkItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Trips', href: '/trips' },
 ];
 
-function NavLink({ href, label, className }: { href: string; label: string; className?: string }) {
-  const pathname = usePathname();
-  // Use exact match for home, prefix match for all other routes
-  const isActive = href === '/' ? pathname === href : pathname === href || pathname.startsWith(href + '/');
+export async function Header() {
+  const cookieStore = await cookies();
+  const isAuthenticated = !!cookieStore.get('access_token')?.value;
 
-  return (
-    <Link
-      href={href}
-      className={cn(
-        'text-sm font-medium underline-offset-4 transition-colors',
-        'hover:underline hover:text-amber-700 dark:hover:text-amber-500',
-        isActive ? 'text-amber-700 underline dark:text-amber-500' : 'text-muted-foreground',
-        className,
-      )}>
-      {label}
-    </Link>
-  );
-}
-
-export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/70 backdrop-blur-md backdrop-saturate-150">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-heading font-semibold text-xl">
-          <ShipWheel className="size-8 text-amber-500" />
-          <span>
-            <span className="text-amber-500 font-bold">Kelana</span>
-            <span className="text-emerald-500 font-extrabold"> AI</span>
-          </span>
+          <KelanaAiLogo />
+          <h1>
+            <KelanaAiText />
+          </h1>
         </Link>
 
         {/* Desktop nav — hidden on mobile */}
@@ -63,59 +35,15 @@ export function Header() {
 
         {/* Desktop right actions — hidden on mobile */}
         <div className="hidden items-center gap-2 md:flex">
-          <ColorModeToggle />
-          <Button size="sm" variant="default">
-            Sign In
-          </Button>
+          <Link
+            href={isAuthenticated ? '/profile' : '/login'}
+            className={cn(buttonVariants({ variant: 'default' }), 'w-full')}>
+            {isAuthenticated ? 'Profil' : 'Masuk'}
+          </Link>
         </div>
 
-        {/* Mobile: drawer trigger — visible only on mobile */}
-        <div className="flex md:hidden">
-          <Drawer modal swipeDirection="right" showSwipeHandle>
-            <DrawerTrigger
-              render={
-                <Button size="icon" variant="ghost" aria-label="Open menu">
-                  <PanelRightOpen />
-                </Button>
-              }
-            />
-            <DrawerContent>
-              <DrawerHeader className="flex-row items-center justify-between">
-                <DrawerTitle>Menu</DrawerTitle>
-                <DrawerClose
-                  render={
-                    <Button size="icon" variant="ghost" aria-label="Close menu">
-                      <X />
-                    </Button>
-                  }
-                />
-              </DrawerHeader>
-
-              {/* Nav links */}
-              <nav className="flex flex-col gap-1 px-4 py-2">
-                {navLinks.map(link => (
-                  <DrawerClose
-                    key={link.href}
-                    render={<NavLink href={link.href} label={link.label} className="py-2.5 text-base" />}
-                  />
-                ))}
-              </nav>
-
-              <Separator className="mx-4 my-2 w-auto" />
-
-              {/* Footer actions */}
-              <DrawerFooter className="flex-col gap-2">
-                <Button size="default" className="w-full">
-                  Sign In
-                </Button>
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-sm text-muted-foreground">Tema</span>
-                  <ColorModeToggle />
-                </div>
-              </DrawerFooter>
-            </DrawerContent>
-          </Drawer>
-        </div>
+        {/* Mobile Drawer - shown on mobile */}
+        <HeaderDrawer menus={navLinks} isAuthenticated={isAuthenticated} />
       </div>
     </header>
   );
